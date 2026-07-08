@@ -7,9 +7,164 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model HealthCheck {
-  id        String   @id @default(cuid())
-  label     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum UserRole {
+  TENANT
+  LANDLORD
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+enum RentalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  STRIPE
+  SSLCOMMERZ
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+model User {
+  id              String          @id @default(cuid())
+  name            String
+  email           String          @unique
+  password        String
+  phone           String?
+  address         String?
+  role            UserRole
+  status          UserStatus      @default(ACTIVE)
+  landlordProfile Property[]      @relation("LandlordProperties")
+  tenantRentals   RentalRequest[] @relation("TenantRentals")
+  payments        Payment[]
+  reviews         Review[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([role])
+  @@index([status])
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  properties  Property[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Property {
+  id             String          @id @default(cuid())
+  title          String
+  description    String
+  location       String
+  address        String?
+  rentAmount     Decimal         @db.Decimal(12, 2)
+  bedrooms       Int
+  bathrooms      Int
+  areaSqFt       Int?
+  amenities      String[]
+  images         String[]
+  status         PropertyStatus  @default(AVAILABLE)
+  landlordId     String
+  categoryId     String
+  landlord       User            @relation("LandlordProperties", fields: [landlordId], references: [id])
+  category       Category        @relation(fields: [categoryId], references: [id])
+  rentalRequests RentalRequest[]
+  reviews        Review[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([location])
+  @@index([rentAmount])
+  @@index([status])
+  @@index([categoryId])
+  @@index([landlordId])
+}
+
+model RentalRequest {
+  id              String       @id @default(cuid())
+  tenantId        String
+  propertyId      String
+  status          RentalStatus @default(PENDING)
+  moveInDate      DateTime
+  rentalMonths    Int
+  message         String?
+  rejectionReason String?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  activeAt        DateTime?
+  completedAt     DateTime?
+  tenant          User         @relation("TenantRentals", fields: [tenantId], references: [id])
+  property        Property     @relation(fields: [propertyId], references: [id])
+  payments        Payment[]
+  review          Review?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([status])
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  transactionId     String?         @unique
+  rentalRequestId   String
+  tenantId          String
+  amount            Decimal         @db.Decimal(12, 2)
+  currency          String          @default("usd")
+  method            String?
+  provider          PaymentProvider @default(STRIPE)
+  status            PaymentStatus   @default(PENDING)
+  providerSessionId String?         @unique
+  providerPaymentId String?         @unique
+  paidAt            DateTime?
+  rentalRequest     RentalRequest   @relation(fields: [rentalRequestId], references: [id])
+  tenant            User            @relation(fields: [tenantId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([rentalRequestId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model Review {
+  id              String        @id @default(cuid())
+  rating          Int
+  comment         String?
+  tenantId        String
+  propertyId      String
+  rentalRequestId String        @unique
+  tenant          User          @relation(fields: [tenantId], references: [id])
+  property        Property      @relation(fields: [propertyId], references: [id])
+  rentalRequest   RentalRequest @relation(fields: [rentalRequestId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([rating])
 }
