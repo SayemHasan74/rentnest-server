@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { appConfig } from "../constants/app";
+import { AuthRoutes } from "../modules/auth/auth.routes";
 import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
@@ -14,5 +15,7 @@ router.get("/health", (_req, res) => {
     }
   });
 });
+
+router.use("/auth", AuthRoutes);
 
 export default router;
