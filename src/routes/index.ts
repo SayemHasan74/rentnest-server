@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { appConfig } from "../constants/app";
+import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
 
 router.get("/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
+  sendResponse(res, {
     message: "Server health check passed",
     data: {
       service: appConfig.service,

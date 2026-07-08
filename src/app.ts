@@ -2,7 +2,10 @@ import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import { appConfig } from "./constants/app";
 import { env } from "./config/env";
+import { globalErrorHandler } from "./middlewares/globalErrorHandler";
+import { notFound } from "./middlewares/notFound";
 import apiRoutes from "./routes";
+import { sendResponse } from "./utils/sendResponse";
 
 const app: Application = express();
 
@@ -16,8 +19,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
+  sendResponse(res, {
     message: "RentNest API is running",
     data: {
       service: appConfig.service,
@@ -28,5 +30,7 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 app.use("/api", apiRoutes);
+app.use(notFound);
+app.use(globalErrorHandler);
 
 export default app;
