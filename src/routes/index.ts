@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { appConfig } from "../constants/app";
 import { AuthRoutes } from "../modules/auth/auth.routes";
+import { CategoryRoutes } from "../modules/category/category.routes";
 import { PropertyRoutes } from "../modules/property/property.routes";
 import { sendResponse } from "../utils/sendResponse";
 
@@ -19,5 +20,6 @@ router.get("/health", (_req, res) => {
 
 router.use("/auth", AuthRoutes);
 router.use("/properties", PropertyRoutes);
+router.use("/categories", CategoryRoutes);
 
 export default router;
