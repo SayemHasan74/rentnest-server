@@ -35,8 +35,20 @@ const parseAllowedOrigins = (value: string | undefined): string[] => {
     .filter(Boolean);
 };
 
+const getRequiredValue = (key: string, fallback?: string): string => {
+  const value = process.env[key] || fallback;
+
+  if (!value) {
+    throw new Error(`${key} is required`);
+  }
+
+  return value;
+};
+
 export const env = {
   nodeEnv: parseNodeEnv(process.env.NODE_ENV),
   port: parsePort(process.env.PORT),
-  allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS)
+  allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS),
+  jwtSecret: getRequiredValue("JWT_SECRET", "rentnest-development-secret"),
+  jwtExpiresIn: getRequiredValue("JWT_EXPIRES_IN", "7d")
 };

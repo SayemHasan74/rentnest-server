@@ -11,5 +11,14 @@ export const AuthController = {
       message: "User registered successfully",
       data: user
     });
+  }),
+
+  login: catchAsync(async (req, res) => {
+    const result = await AuthService.login(req.body);
+
+    sendResponse(res, {
+      message: "User logged in successfully",
+      data: result
+    });
   })
 };
