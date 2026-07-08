@@ -85,5 +85,19 @@ export const AuthService = {
       accessToken,
       user: excludePassword(user)
     };
+  },
+
+  getMe: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    });
+
+    if (!user) {
+      throw new AppError(404, "User not found");
+    }
+
+    return excludePassword(user);
   }
 };

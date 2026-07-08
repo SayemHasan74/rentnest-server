@@ -20,5 +20,14 @@ export const AuthController = {
       message: "User logged in successfully",
       data: result
     });
+  }),
+
+  me: catchAsync(async (req, res) => {
+    const user = await AuthService.getMe(req.user!.userId);
+
+    sendResponse(res, {
+      message: "Current user retrieved successfully",
+      data: user
+    });
   })
 };
