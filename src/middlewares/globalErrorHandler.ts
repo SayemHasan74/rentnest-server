@@ -1,5 +1,6 @@
 import { ErrorRequestHandler } from "express";
 import { Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 import { env } from "../config/env";
 import { AppError } from "../errors/AppError";
 import { ApiErrorResponse } from "../types/api-response";
@@ -18,6 +19,14 @@ export const globalErrorHandler: ErrorRequestHandler = (
     statusCode = error.statusCode;
     message = error.message;
     errorDetails = error.errorDetails;
+  } else if (error instanceof ZodError) {
+    statusCode = 400;
+    message = "Validation failed";
+    errorDetails = error.issues.map((issue) => ({
+      path: issue.path.join("."),
+      message: issue.message,
+      code: issue.code
+    }));
   } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
     statusCode = 400;
     message = "Database request failed";
