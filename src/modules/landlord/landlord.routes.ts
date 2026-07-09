@@ -10,7 +10,9 @@ import {
   updatePropertyAvailabilityValidationSchema,
   updatePropertyValidationSchema
 } from "../../schemas/property.schema";
+import { updateRentalStatusValidationSchema } from "../../schemas/rental.schema";
 import { LandlordPropertyController } from "./landlord-property.controller";
+import { LandlordRentalController } from "./landlord-rental.controller";
 
 const router = Router();
 
@@ -46,6 +48,17 @@ router.delete(
   "/properties/:id",
   validateRequest({ params: idParamSchema }),
   LandlordPropertyController.delete
+);
+
+router.get("/requests", LandlordRentalController.getRequests);
+
+router.patch(
+  "/requests/:id",
+  validateRequest({
+    params: idParamSchema,
+    body: updateRentalStatusValidationSchema
+  }),
+  LandlordRentalController.updateStatus
 );
 
 export const LandlordRoutes = router;
