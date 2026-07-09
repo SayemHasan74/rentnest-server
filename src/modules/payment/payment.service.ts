@@ -4,6 +4,7 @@ import {
   Prisma,
   RentalStatus
 } from "@prisma/client";
+import Stripe from "stripe";
 import { AppError } from "../../errors/AppError";
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
@@ -11,6 +12,11 @@ import { stripe } from "../../lib/stripe";
 
 type CreatePaymentPayload = {
   rentalRequestId: string;
+};
+
+type ConfirmPaymentPayload = {
+  providerSessionId: string;
+  status: "COMPLETED" | "FAILED" | "CANCELLED";
 };
 
 const paymentInclude = {
@@ -29,6 +35,50 @@ const paymentInclude = {
       }
     }
   }
+};
+
+const completePayment = async (
+  providerSessionId: string,
+  providerPaymentId?: string | null
+) => {
+  const payment = await prisma.payment.findUnique({
+    where: {
+      providerSessionId
+    }
+  });
+
+  if (!payment) {
+    throw new AppError(404, "Payment not found for this Stripe session", {
+      providerSessionId
+    });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const updatedPayment = await tx.payment.update({
+      where: {
+        id: payment.id
+      },
+      data: {
+        status: PaymentStatus.COMPLETED,
+        providerPaymentId: providerPaymentId || payment.providerPaymentId,
+        transactionId: providerPaymentId || providerSessionId,
+        paidAt: new Date()
+      },
+      include: paymentInclude
+    });
+
+    await tx.rentalRequest.update({
+      where: {
+        id: payment.rentalRequestId
+      },
+      data: {
+        status: RentalStatus.ACTIVE,
+        activeAt: new Date()
+      }
+    });
+
+    return updatedPayment;
+  });
 };
 
 export const PaymentService = {
@@ -136,5 +186,135 @@ export const PaymentService = {
         url: session.url
       }
     };
+  },
+
+  confirmPayment: async (tenantId: string, payload: ConfirmPaymentPayload) => {
+    const payment = await prisma.payment.findFirst({
+      where: {
+        providerSessionId: payload.providerSessionId,
+        tenantId
+      }
+    });
+
+    if (!payment) {
+      throw new AppError(404, "Payment not found");
+    }
+
+    if (payload.status === PaymentStatus.COMPLETED) {
+      const session = await stripe.checkout.sessions.retrieve(
+        payload.providerSessionId
+      );
+
+      if (session.payment_status !== "paid") {
+        throw new AppError(400, "Stripe payment is not paid yet", {
+          paymentStatus: session.payment_status
+        });
+      }
+
+      return completePayment(
+        payload.providerSessionId,
+        session.payment_intent?.toString()
+      );
+    }
+
+    return prisma.payment.update({
+      where: {
+        id: payment.id
+      },
+      data: {
+        status: payload.status as PaymentStatus
+      },
+      include: paymentInclude
+    });
+  },
+
+  handleStripeWebhook: async (signature: string | undefined, rawBody: Buffer) => {
+    if (!env.stripeWebhookSecret) {
+      throw new AppError(500, "Stripe webhook secret is not configured");
+    }
+
+    if (!signature) {
+      throw new AppError(400, "Stripe signature header is missing");
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        env.stripeWebhookSecret
+      );
+    } catch (_error) {
+      throw new AppError(400, "Invalid Stripe webhook signature");
+    }
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      if (session.payment_status === "paid") {
+        await completePayment(session.id, session.payment_intent?.toString());
+      }
+    }
+
+    if (event.type === "checkout.session.expired") {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      await prisma.payment.updateMany({
+        where: {
+          providerSessionId: session.id,
+          status: PaymentStatus.PENDING
+        },
+        data: {
+          status: PaymentStatus.CANCELLED
+        }
+      });
+    }
+
+    if (event.type === "payment_intent.payment_failed") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+      await prisma.payment.updateMany({
+        where: {
+          providerPaymentId: paymentIntent.id
+        },
+        data: {
+          status: PaymentStatus.FAILED
+        }
+      });
+    }
+
+    return {
+      received: true,
+      eventType: event.type
+    };
+  },
+
+  getMine: async (tenantId: string) => {
+    return prisma.payment.findMany({
+      where: {
+        tenantId
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      include: paymentInclude
+    });
+  },
+
+  getById: async (tenantId: string, paymentId: string) => {
+    const payment = await prisma.payment.findFirst({
+      where: {
+        id: paymentId,
+        tenantId
+      },
+      include: paymentInclude
+    });
+
+    if (!payment) {
+      throw new AppError(404, "Payment not found");
+    }
+
+    return payment;
   }
 };
