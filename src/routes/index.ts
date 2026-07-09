@@ -7,6 +7,7 @@ import { LandlordRoutes } from "../modules/landlord/landlord.routes";
 import { PaymentRoutes } from "../modules/payment/payment.routes";
 import { PropertyRoutes } from "../modules/property/property.routes";
 import { RentalRoutes } from "../modules/rental/rental.routes";
+import { ReviewRoutes } from "../modules/review/review.routes";
 import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
@@ -29,5 +30,6 @@ router.use("/categories", CategoryRoutes);
 router.use("/landlord", LandlordRoutes);
 router.use("/rentals", RentalRoutes);
 router.use("/payments", PaymentRoutes);
+router.use("/reviews", ReviewRoutes);
 
 export default router;
