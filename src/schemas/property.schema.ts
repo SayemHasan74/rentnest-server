@@ -48,3 +48,7 @@ export const propertyValidationSchema = z.object({
 
 export const updatePropertyValidationSchema =
   propertyValidationSchema.partial();
+
+export const updatePropertyAvailabilityValidationSchema = z.object({
+  status: propertyStatusSchema
+});
