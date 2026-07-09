@@ -4,6 +4,7 @@ import { AuthRoutes } from "../modules/auth/auth.routes";
 import { CategoryRoutes } from "../modules/category/category.routes";
 import { LandlordRoutes } from "../modules/landlord/landlord.routes";
 import { PropertyRoutes } from "../modules/property/property.routes";
+import { RentalRoutes } from "../modules/rental/rental.routes";
 import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
@@ -23,5 +24,6 @@ router.use("/auth", AuthRoutes);
 router.use("/properties", PropertyRoutes);
 router.use("/categories", CategoryRoutes);
 router.use("/landlord", LandlordRoutes);
+router.use("/rentals", RentalRoutes);
 
 export default router;
