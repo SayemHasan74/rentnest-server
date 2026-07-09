@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { userStatusSchema } from "./common.schema";
+import { userRoleSchema, userStatusSchema } from "./common.schema";
+
+export const adminUserQuerySchema = z.object({
+  role: userRoleSchema.optional(),
+  status: userStatusSchema.optional(),
+  search: z.string().trim().optional()
+});
 
 export const updateUserStatusValidationSchema = z.object({
   status: userStatusSchema

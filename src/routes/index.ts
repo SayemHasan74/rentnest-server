@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { appConfig } from "../constants/app";
+import { AdminRoutes } from "../modules/admin/admin.routes";
 import { AuthRoutes } from "../modules/auth/auth.routes";
 import { CategoryRoutes } from "../modules/category/category.routes";
 import { LandlordRoutes } from "../modules/landlord/landlord.routes";
@@ -21,6 +22,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/auth", AuthRoutes);
+router.use("/admin", AdminRoutes);
 router.use("/properties", PropertyRoutes);
 router.use("/categories", CategoryRoutes);
 router.use("/landlord", LandlordRoutes);
