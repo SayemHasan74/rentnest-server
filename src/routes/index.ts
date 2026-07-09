@@ -4,6 +4,7 @@ import { AdminRoutes } from "../modules/admin/admin.routes";
 import { AuthRoutes } from "../modules/auth/auth.routes";
 import { CategoryRoutes } from "../modules/category/category.routes";
 import { LandlordRoutes } from "../modules/landlord/landlord.routes";
+import { PaymentRoutes } from "../modules/payment/payment.routes";
 import { PropertyRoutes } from "../modules/property/property.routes";
 import { RentalRoutes } from "../modules/rental/rental.routes";
 import { sendResponse } from "../utils/sendResponse";
@@ -27,5 +28,6 @@ router.use("/properties", PropertyRoutes);
 router.use("/categories", CategoryRoutes);
 router.use("/landlord", LandlordRoutes);
 router.use("/rentals", RentalRoutes);
+router.use("/payments", PaymentRoutes);
 
 export default router;

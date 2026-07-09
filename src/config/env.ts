@@ -50,5 +50,15 @@ export const env = {
   port: parsePort(process.env.PORT),
   allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS),
   jwtSecret: getRequiredValue("JWT_SECRET", "rentnest-development-secret"),
-  jwtExpiresIn: getRequiredValue("JWT_EXPIRES_IN", "7d")
+  jwtExpiresIn: getRequiredValue("JWT_EXPIRES_IN", "7d"),
+  stripeSecretKey: getRequiredValue("STRIPE_SECRET_KEY", "sk_test_placeholder"),
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+  stripeSuccessUrl: getRequiredValue(
+    "STRIPE_SUCCESS_URL",
+    "http://localhost:5000/api/payments/success"
+  ),
+  stripeCancelUrl: getRequiredValue(
+    "STRIPE_CANCEL_URL",
+    "http://localhost:5000/api/payments/cancel"
+  )
 };
