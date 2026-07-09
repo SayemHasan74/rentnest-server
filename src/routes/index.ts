@@ -8,6 +8,7 @@ import { PaymentRoutes } from "../modules/payment/payment.routes";
 import { PropertyRoutes } from "../modules/property/property.routes";
 import { RentalRoutes } from "../modules/rental/rental.routes";
 import { ReviewRoutes } from "../modules/review/review.routes";
+import { SwaggerRoutes } from "../docs/swagger";
 import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
@@ -23,6 +24,7 @@ router.get("/health", (_req, res) => {
   });
 });
 
+router.use("/", SwaggerRoutes);
 router.use("/auth", AuthRoutes);
 router.use("/admin", AdminRoutes);
 router.use("/properties", PropertyRoutes);
