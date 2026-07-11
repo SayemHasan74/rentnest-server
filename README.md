@@ -183,8 +183,8 @@ All errors follow this format:
 
 ```text
 Backend Repo: https://github.com/SayemHasan74/rentnest-server
-Live API: Add deployed Render URL
-API Docs: /api/docs on the live API
+Live API: https://rentnest-server.onrender.com
+API Docs: https://rentnest-server.onrender.com/api/docs
 Demo Video: Add video link
 Admin Email: admin@rentnest.com
 Admin Password: admin123
