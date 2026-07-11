@@ -67,9 +67,10 @@ const completePayment = async (
       include: paymentInclude
     });
 
-    await tx.rentalRequest.update({
+    await tx.rentalRequest.updateMany({
       where: {
-        id: payment.rentalRequestId
+        id: payment.rentalRequestId,
+        status: RentalStatus.APPROVED
       },
       data: {
         status: RentalStatus.ACTIVE,

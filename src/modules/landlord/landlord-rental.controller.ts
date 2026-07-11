@@ -25,5 +25,17 @@ export const LandlordRentalController = {
       message: `Rental request ${req.body.status.toLowerCase()} successfully`,
       data: rentalRequest
     });
+  }),
+
+  complete: catchAsync(async (req, res) => {
+    const rentalRequest = await LandlordRentalService.complete(
+      req.user!.userId,
+      req.params.id as string
+    );
+
+    sendResponse(res, {
+      message: "Rental request completed successfully",
+      data: rentalRequest
+    });
   })
 };

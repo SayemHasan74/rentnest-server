@@ -61,4 +61,10 @@ router.patch(
   LandlordRentalController.updateStatus
 );
 
+router.patch(
+  "/requests/:id/complete",
+  validateRequest({ params: idParamSchema }),
+  LandlordRentalController.complete
+);
+
 export const LandlordRoutes = router;

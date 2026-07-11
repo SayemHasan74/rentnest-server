@@ -116,6 +116,7 @@ PATCH  /api/landlord/properties/:id/availability
 DELETE /api/landlord/properties/:id
 GET    /api/landlord/requests
 PATCH  /api/landlord/requests/:id
+PATCH  /api/landlord/requests/:id/complete
 ```
 
 ### Tenant Rentals
@@ -174,6 +175,9 @@ All errors follow this format:
 4. Stripe confirms payment through webhook or confirmation endpoint.
 5. Payment becomes `COMPLETED`.
 6. Rental request becomes `ACTIVE`.
+7. Landlord completes the active rental through
+   `PATCH /api/landlord/requests/:id/complete`.
+8. Tenant can leave a review after the rental becomes `COMPLETED`.
 
 ## Submission Info
 

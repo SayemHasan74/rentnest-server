@@ -46,6 +46,23 @@ export const openApiDocument = {
           message: { type: "string" },
           data: {}
         }
+      },
+      PropertyInput: {
+        type: "object",
+        properties: {
+          title: { type: "string", example: "Modern apartment in Dhanmondi" },
+          description: { type: "string", example: "A bright apartment close to shops and transit." },
+          location: { type: "string", example: "Dhanmondi, Dhaka" },
+          address: { type: "string", example: "Road 8, Dhanmondi" },
+          rentAmount: { type: "number", example: 350 },
+          bedrooms: { type: "integer", example: 2 },
+          bathrooms: { type: "integer", example: 2 },
+          areaSqFt: { type: "integer", example: 1100 },
+          amenities: { type: "array", items: { type: "string" }, example: ["Lift", "Parking"] },
+          images: { type: "array", items: { type: "string", format: "uri" } },
+          status: { type: "string", enum: ["AVAILABLE", "UNAVAILABLE"] },
+          categoryId: { type: "string", example: "category-id" }
+        }
       }
     }
   },
@@ -197,6 +214,20 @@ export const openApiDocument = {
         summary: "Update category as admin",
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string", example: "Apartment" },
+                  description: { type: "string", example: "Residential apartments." }
+                }
+              }
+            }
+          }
+        },
         responses: { "200": { description: "Category updated successfully" } }
       },
       delete: {
@@ -218,6 +249,25 @@ export const openApiDocument = {
         tags: ["Landlord"],
         summary: "Create property listing",
         security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                allOf: [{ $ref: "#/components/schemas/PropertyInput" }],
+                required: [
+                  "title",
+                  "description",
+                  "location",
+                  "rentAmount",
+                  "bedrooms",
+                  "bathrooms",
+                  "categoryId"
+                ]
+              }
+            }
+          }
+        },
         responses: { "201": { description: "Property listing created successfully" } }
       }
     },
@@ -227,6 +277,10 @@ export const openApiDocument = {
         summary: "Update own property listing",
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/PropertyInput" } } }
+        },
         responses: { "200": { description: "Property listing updated successfully" } }
       },
       delete: {
@@ -243,6 +297,18 @@ export const openApiDocument = {
         summary: "Update property availability",
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["status"],
+                properties: { status: { type: "string", enum: ["AVAILABLE", "UNAVAILABLE"] } }
+              }
+            }
+          }
+        },
         responses: { "200": { description: "Property availability updated successfully" } }
       }
     },
@@ -278,11 +344,41 @@ export const openApiDocument = {
         responses: { "200": { description: "Rental request updated successfully" } }
       }
     },
+    "/api/landlord/requests/{id}/complete": {
+      patch: {
+        tags: ["Landlord"],
+        summary: "Complete an active, paid rental request",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Rental request completed successfully" },
+          "400": { description: "Rental is not active or has no completed payment" },
+          "404": { description: "Rental request not found for this landlord" }
+        }
+      }
+    },
     "/api/rentals": {
       post: {
         tags: ["Rentals"],
         summary: "Submit rental request as tenant",
         security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["propertyId", "moveInDate", "rentalMonths"],
+                properties: {
+                  propertyId: { type: "string", example: "property-id" },
+                  moveInDate: { type: "string", format: "date-time" },
+                  rentalMonths: { type: "integer", minimum: 1, maximum: 60, example: 12 },
+                  message: { type: "string", example: "I would like to move in next month." }
+                }
+              }
+            }
+          }
+        },
         responses: { "201": { description: "Rental request submitted successfully" } }
       },
       get: {
@@ -306,6 +402,18 @@ export const openApiDocument = {
         tags: ["Payments"],
         summary: "Create Stripe checkout session for approved rental",
         security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["rentalRequestId"],
+                properties: { rentalRequestId: { type: "string", example: "rental-request-id" } }
+              }
+            }
+          }
+        },
         responses: { "201": { description: "Stripe checkout session created successfully" } }
       }
     },
@@ -314,6 +422,21 @@ export const openApiDocument = {
         tags: ["Payments"],
         summary: "Confirm payment status with Stripe session",
         security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["providerSessionId", "status"],
+                properties: {
+                  providerSessionId: { type: "string", example: "cs_test_example" },
+                  status: { type: "string", enum: ["COMPLETED", "FAILED", "CANCELLED"] }
+                }
+              }
+            }
+          }
+        },
         responses: { "200": { description: "Payment status confirmed successfully" } }
       }
     },
@@ -346,6 +469,23 @@ export const openApiDocument = {
         tags: ["Reviews"],
         summary: "Create review after completed rental",
         security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["rentalRequestId", "propertyId", "rating"],
+                properties: {
+                  rentalRequestId: { type: "string", example: "rental-request-id" },
+                  propertyId: { type: "string", example: "property-id" },
+                  rating: { type: "integer", minimum: 1, maximum: 5, example: 5 },
+                  comment: { type: "string", example: "Clean property and responsive landlord." }
+                }
+              }
+            }
+          }
+        },
         responses: { "201": { description: "Review created successfully" } }
       }
     },

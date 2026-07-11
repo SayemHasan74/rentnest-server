@@ -1,4 +1,4 @@
-import { PropertyStatus, RentalStatus } from "@prisma/client";
+import { PaymentStatus, PropertyStatus, RentalStatus } from "@prisma/client";
 import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 
@@ -137,5 +137,50 @@ export const LandlordRentalService = {
     });
 
     return updatedRentalRequest;
+  },
+
+  complete: async (landlordId: string, rentalRequestId: string) => {
+    const rentalRequest = await getRentalForLandlordOrThrow(
+      landlordId,
+      rentalRequestId
+    );
+
+    if (rentalRequest.status !== RentalStatus.ACTIVE) {
+      throw new AppError(400, "Only active rental requests can be completed", {
+        currentStatus: rentalRequest.status
+      });
+    }
+
+    const hasCompletedPayment = rentalRequest.payments.some(
+      (payment) => payment.status === PaymentStatus.COMPLETED
+    );
+
+    if (!hasCompletedPayment) {
+      throw new AppError(400, "Rental request must be paid before completion");
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const completedRentalRequest = await tx.rentalRequest.update({
+        where: {
+          id: rentalRequestId
+        },
+        data: {
+          status: RentalStatus.COMPLETED,
+          completedAt: new Date()
+        },
+        include: landlordRentalInclude
+      });
+
+      await tx.property.update({
+        where: {
+          id: rentalRequest.propertyId
+        },
+        data: {
+          status: PropertyStatus.AVAILABLE
+        }
+      });
+
+      return completedRentalRequest;
+    });
   }
 };
