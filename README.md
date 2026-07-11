@@ -185,7 +185,7 @@ All errors follow this format:
 Backend Repo: https://github.com/SayemHasan74/rentnest-server
 Live API: https://rentnest-server.onrender.com
 API Docs: https://rentnest-server.onrender.com/api/docs
-Demo Video: Add video link
+Demo Video: https://drive.google.com/file/d/15dWGNmnACKdgl0Pi75c0ZtTEFFgTRRNN/view?usp=drive_link
 Admin Email: admin@rentnest.com
 Admin Password: admin123
 ```

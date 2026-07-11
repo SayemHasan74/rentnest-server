@@ -1,0 +1,170 @@
+{
+  "info": {
+    "_postman_id": "ac185cdf-ae08-4da8-aa78-d7849dc238e0",
+    "name": "RentNest Live API Demo",
+    "description": "Run requests from top to bottom. Tokens and resource IDs are saved automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://rentnest-server.onrender.com" },
+    { "key": "categoryId", "value": "" },
+    { "key": "propertyId", "value": "" },
+    { "key": "rentalId", "value": "" },
+    { "key": "landlordToken", "value": "" },
+    { "key": "tenantToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "checkoutUrl", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Health Check",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/health" }
+    },
+    {
+      "name": "02 - Get Categories",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "const apartment = body.data.find((category) => category.name === 'Apartment');",
+          "pm.collectionVariables.set('categoryId', apartment.id);"
+        ] }
+      }],
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/categories" }
+    },
+    {
+      "name": "03 - Landlord Login",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('landlordToken', body.data.accessToken);"
+        ] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"landlord@rentnest.com\",\n  \"password\": \"landlord123\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "04 - Create Property",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('propertyId', body.data.id);"
+        ] }
+      }],
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{landlordToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Demo Apartment {{$timestamp}}\",\n  \"description\": \"A clean affordable apartment created for the RentNest Postman demonstration.\",\n  \"location\": \"Dhaka, Bangladesh\",\n  \"address\": \"Dhanmondi, Dhaka\",\n  \"rentAmount\": 10,\n  \"bedrooms\": 2,\n  \"bathrooms\": 2,\n  \"areaSqFt\": 950,\n  \"amenities\": [\"WiFi\", \"Lift\", \"Security\"],\n  \"images\": [],\n  \"status\": \"AVAILABLE\",\n  \"categoryId\": \"{{categoryId}}\"\n}" },
+        "url": "{{baseUrl}}/api/landlord/properties"
+      }
+    },
+    {
+      "name": "05 - Tenant Login",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('tenantToken', body.data.accessToken);"
+        ] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"tenant@rentnest.com\",\n  \"password\": \"tenant123\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "06 - Submit Rental Request",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('rentalId', body.data.id);"
+        ] }
+      }],
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tenantToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"moveInDate\": \"2026-08-01T00:00:00.000Z\",\n  \"rentalMonths\": 1,\n  \"message\": \"I would like to rent this apartment.\"\n}" },
+        "url": "{{baseUrl}}/api/rentals"
+      }
+    },
+    {
+      "name": "07 - Landlord Approves Rental",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{landlordToken}}", "type": "string" }] },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" },
+        "url": "{{baseUrl}}/api/landlord/requests/{{rentalId}}"
+      }
+    },
+    {
+      "name": "08 - Create Stripe Checkout",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('checkoutUrl', body.data.checkoutSession.url);"
+        ] }
+      }],
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tenantToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"rentalRequestId\": \"{{rentalId}}\"\n}" },
+        "url": "{{baseUrl}}/api/payments/create"
+      }
+    },
+    {
+      "name": "09 - Get Rental and Payment Status",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tenantToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/rentals/{{rentalId}}"
+      }
+    },
+    {
+      "name": "10 - Admin Login",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('adminToken', body.data.accessToken);"
+        ] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@rentnest.com\",\n  \"password\": \"admin123\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "11 - Admin Gets Users",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/users"
+      }
+    },
+    {
+      "name": "12 - Validation Error",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": "{{baseUrl}}/api/auth/register"
+      }
+    }
+  ]
+}
