@@ -13,6 +13,9 @@ import { PaymentController } from "./payment.controller";
 
 const router = Router();
 
+router.get("/success", PaymentController.success);
+router.get("/cancel", PaymentController.cancel);
+
 router.post(
   "/create",
   auth(UserRole.TENANT),

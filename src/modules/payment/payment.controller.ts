@@ -3,6 +3,22 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 
 export const PaymentController = {
+  success: catchAsync(async (req, res) => {
+    sendResponse(res, {
+      message: "Stripe checkout completed. Payment verification is processing.",
+      data: {
+        providerSessionId: req.query.session_id || null
+      }
+    });
+  }),
+
+  cancel: catchAsync(async (_req, res) => {
+    sendResponse(res, {
+      message: "Stripe checkout was cancelled",
+      data: null
+    });
+  }),
+
   create: catchAsync(async (req, res) => {
     const result = await PaymentService.createCheckoutSession(
       req.user!.userId,

@@ -417,6 +417,21 @@ export const openApiDocument = {
         responses: { "201": { description: "Stripe checkout session created successfully" } }
       }
     },
+    "/api/payments/success": {
+      get: {
+        tags: ["Payments"],
+        summary: "Stripe Checkout success redirect",
+        parameters: [{ name: "session_id", in: "query", schema: { type: "string" } }],
+        responses: { "200": { description: "Checkout completed and verification is processing" } }
+      }
+    },
+    "/api/payments/cancel": {
+      get: {
+        tags: ["Payments"],
+        summary: "Stripe Checkout cancellation redirect",
+        responses: { "200": { description: "Checkout was cancelled" } }
+      }
+    },
     "/api/payments/confirm": {
       post: {
         tags: ["Payments"],
